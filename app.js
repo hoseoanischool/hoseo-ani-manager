@@ -346,4 +346,5 @@ $copyCsvBtn.onclick = copyCsv;
 $confirmationCloseBtn.onclick = closeConfirmationModal;
 
 renderWeekTabs();
+
 attachBookingsListener();
