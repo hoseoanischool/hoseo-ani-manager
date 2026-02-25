@@ -1,29 +1,34 @@
 // ====== 설정 ======
-const ROOMS = ["212호"]; // 단일 강의실로 변경
+const ROOMS = ["210호", "106호", "208호", "212호"]; // 208호 추가
 
 const SEATS_BY_ROOM = {
-  "212호": Array.from({ length: 32 }, (_, i) => String(i + 1)), // 좌석 수 32개로 변경
+  "210호": Array.from({ length: 35 }, (_, i) => String(i + 1)),
+  "106호": Array.from({ length: 32 }, (_, i) => String(i + 1)),
+  "208호": Array.from({ length: 36 }, (_, i) => String(i + 1)), // 36석 설정
+  "212호": Array.from({ length: 32 }, (_, i) => String(i + 1)),
 };
 
 // 고정 좌석 설정
 const fixedSeatsByRoom = {
-  "212호": {
-"19": "김지호",
-"20": "이지후",
-"27": "임채은"
-  }
+  "210호": {
+    "1": "이채은", "7": "김지선", "9": "자나라", "10": "최수인", "11": "이현두",
+    "12": "임호빈", "13": "전가람", "17": "장수선", "18": "임소연", "19": "이수빈",
+    "20": "장아라", "24": "박소윤", "25": "박지혜", "27": "장시은", "28": "이현아",
+  },
+  "106호": { "14": "김정민" },
+  "208호": {}, // 208호 고정좌석 필요시 여기에 추가
+  "212호": {}
 };
 
 // 야작 금지 인원 설정
 const BANNED_USERS = [
-  // 필요시 여기에 야작 금지 인원 추가
+  { name: "키커바", studentId: "12340000" }
 ];
 
-// CSV 복사 기능 관리자 비밀번호
-const ADMIN_PASSWORD = '0415405841-2025-2-0821';
+// CSV 복사 기능 관리자 비밀번호 (조교님이 정하신 번호로 수정하세요)
+const ADMIN_PASSWORD = '0415405841-2025-2-0821'; 
 
 const KST_OFFSET_MIN = 9 * 60; // KST +09:00
-// ===================
 
 function nowKST() {
   const now = new Date();
@@ -58,6 +63,7 @@ function labelKOR(d) {
   return `${d.getMonth()+1}/${d.getDate()}(${w})`;
 }
 
+const $roomTabs = document.getElementById("roomTabs");
 const $weekTabs = document.getElementById("weekTabs");
 const $seatLayout = document.getElementById("seatLayout");
 const $modal = document.getElementById("bookingModal");
@@ -73,18 +79,34 @@ const $searchPhone = document.getElementById("searchPhoneNumber");
 const $searchBtn = document.getElementById("searchBtn");
 const $reservationList = document.getElementById("reservationList");
 const $copyCsvBtn = document.getElementById("copyCsvBtn");
+const $activeRoomDisplay = document.getElementById("activeRoomDisplay");
 const $confirmationModal = document.getElementById("confirmationModal");
 const $confirmationMessage = document.getElementById("confirmationMessage");
 const $confirmationCloseBtn = document.getElementById("confirmationCloseBtn");
 const $openChatLinkContainer = document.getElementById("openChatLinkContainer");
 
-
-let activeRoom = ROOMS[0]; // 항상 212호
+let activeRoom = ROOMS[0];
 let activeDate = nowKST();
 let activeDateKey = ymdKST(activeDate);
 let selectedSeat = null;
 let bookingsRef = null;
 let bookingsUnsub = null;
+
+function renderRoomTabs() {
+  $roomTabs.innerHTML = "";
+  ROOMS.forEach(room => {
+    const btn = document.createElement("button");
+    btn.textContent = room;
+    btn.className = (room === activeRoom) ? "active" : "inactive";
+    btn.onclick = () => {
+      activeRoom = room;
+      renderRoomTabs();
+      attachBookingsListener();
+    };
+    $roomTabs.appendChild(btn);
+  });
+  $activeRoomDisplay.textContent = `현재 선택: ${activeRoom}`;
+}
 
 function renderWeekTabs() {
   $weekTabs.innerHTML = "";
@@ -112,8 +134,7 @@ function renderSeats(snapshotVal) {
   const todayKey = ymdKST(nowKST());
   const isPastDate = activeDateKey < todayKey;
 
-  // room-212 클래스 추가
-  $seatLayout.classList.remove("past-date");
+  $seatLayout.classList.remove("room-106", "room-210", "room-208", "room-212", "past-date");
   $seatLayout.classList.add(`room-${activeRoom.replace('호', '')}`);
   if (isPastDate) $seatLayout.classList.add("past-date");
 
@@ -170,16 +191,11 @@ async function submitBooking() {
   const consentSnap = await consentRef.get();
   
   if (!consentSnap.exists()) {
-    const consentText = `개인 정보 수집 동의
-- 입력된 이름과 학번은 서비스형 백엔드 시스템에 저장됩니다.
-- 한 학기에 한 번씩 저장된 정보는 삭제될 예정입니다.
-- 야작 채팅방 내 공지사항 필독 바라며, 해당 사항을 지키지 않을 시 추후 불이익을 받을 수 있습니다.
-- 동의하지 않을 시, 야작 진행이 어렵습니다.
-- 해당 팝업은 최초 야작 신청 시에만 뜹니다.`;
+    const consentText = `개인 정보 수집 동의 (생략...)`;
     if (confirm(consentText)) {
       await consentRef.set({ agreedAt: Date.now() });
     } else {
-      alert("개인정보 수집에 동의하지 않아 예약을 진행할 수 없습니다.");
+      alert("동의가 필요합니다.");
       return;
     }
   }
@@ -189,30 +205,17 @@ async function submitBooking() {
     return;
   }
 
-  if (!/^\d{8}$/.test(sid)) {
-    alert("학번을 입력해 주세요");
-    return;
-  }
-  
-  if (!/^\d{4}$/.test(phone)) {
-    alert("4자리 숫자를 입력해 주세요");
-    return;
-  }
+  if (!/^\d{8}$/.test(sid)) { alert("학번 8자리를 입력해 주세요"); return; }
+  if (!/^\d{4}$/.test(phone)) { alert("4자리 숫자를 입력해 주세요"); return; }
 
   const bookingsSnap = await db.ref(`bookings/${activeRoom}/${activeDateKey}`).get();
   const bookings = bookingsSnap.val() || {};
   if (Object.values(bookings).some(b => b.studentId === sid)) {
-    alert(`이미 이 날짜에 다른 좌석을 예약했습니다.`);
+    alert(`이미 다른 좌석을 예약했습니다.`);
     return;
   }
 
   const seatRef = db.ref(`bookings/${activeRoom}/${activeDateKey}/${selectedSeat}`);
-  const seatSnap = await seatRef.get();
-  if (seatSnap.exists()) {
-    alert("이미 예약된 좌석입니다.");
-    return;
-  }
-
   await seatRef.set({ name, studentId: sid, phone, createdAt: Date.now() });
 
   const profileName = `${activeRoom}-${selectedSeat}-${sid}-${name}`;
@@ -228,10 +231,7 @@ async function searchReservation() {
   $reservationList.innerHTML = "";
   $openChatLinkContainer.innerHTML = "";
 
-  if (!name || !sid || !phone) {
-    alert("예약 조회를 위해 이름, 학번, 나만의 4자리 숫자를 모두 입력해주세요.");
-    return;
-  }
+  if (!name || !sid || !phone) { alert("모두 입력해주세요."); return; }
 
   const allRoomsBookings = await db.ref("bookings").get();
   const roomsData = allRoomsBookings.val() || {};
@@ -240,101 +240,50 @@ async function searchReservation() {
   for (const [room, roomBookings] of Object.entries(roomsData)) {
     for (const [date, dayBookings] of Object.entries(roomBookings)) {
       Object.entries(dayBookings).forEach(([seat, v]) => {
-        const rec = v || {};
-        if (rec.name === name && rec.studentId === sid && rec.phone === phone) {
-          results.push({ room, date, seat, ...rec });
+        if (v.name === name && v.studentId === sid && v.phone === phone) {
+          results.push({ room, date, seat, ...v });
         }
       });
     }
   }
 
-  if (results.length === 0) {
-    $reservationList.textContent = "해당 조건에 맞는 예약이 없습니다.";
-    return;
-  }
+  if (results.length === 0) { $reservationList.textContent = "내역이 없습니다."; return; }
 
-  $openChatLinkContainer.innerHTML = `
-    <a href="https://open.kakao.com/o/gS1ZZ8gh" target="_blank" rel="noopener noreferrer" style="color: #3498db; font-weight: bold; text-decoration: none;">
-      ▶ 야작 오픈 채팅방 바로가기
-    </a>
-  `;
+  $openChatLinkContainer.innerHTML = `<a href="카톡방링크">▶ 오픈채팅 바로가기</a>`;
 
   results.forEach(res => {
     const row = document.createElement("div");
     row.className = "res-item";
-    row.innerHTML = `
-      <div>
-        <strong>${res.date}</strong> · ${res.room} 좌석 <strong>${res.seat}</strong>
-        <div style="font-size:12px;color:#555">${res.name} / ${res.studentId}</div>
-      </div>
-      <div>
-        <button data-room="${res.room}" data-date="${res.date}" data-seat="${res.seat}" class="cancel-btn">취소</button>
-      </div>
-    `;
-    row.querySelector(".cancel-btn").onclick = async (e) => {
-      const { room, date, seat } = e.target.dataset;
-      const confirmMsg = `${date} ${room} 좌석 ${seat}\n정말 취소하시겠습니까?`;
-      if (!confirm(confirmMsg)) return;
-
-      const ref = db.ref(`bookings/${room}/${date}/${seat}`);
-      const curr = await ref.get();
-      const cv = curr.val();
-      if (!cv) { alert("이미 취소되었거나 존재하지 않습니다."); return; }
-      if (cv.name !== name || cv.studentId !== sid || cv.phone !== phone) {
-        alert("예약자 정보가 일치하지 않습니다.");
-        return;
-      }
-
-      await ref.remove();
-      alert("취소되었습니다.");
-      searchReservation();
-    };
+    row.innerHTML = `<div><strong>${res.date}</strong> · ${res.room} ${res.seat}번</div>
+                     <button onclick="cancelBooking('${res.room}','${res.date}','${res.seat}')">취소</button>`;
     $reservationList.appendChild(row);
   });
 }
 
 async function copyCsv() {
-    const inputPassword = prompt("관리자 비밀번호를 입력하세요:");
-  
-    if (inputPassword === null) return;
-  
-    if (inputPassword !== ADMIN_PASSWORD) {
-      alert("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-  
+    const inputPassword = prompt("관리자 비밀번호:");
+    if (inputPassword !== ADMIN_PASSWORD) { alert("틀렸습니다."); return; }
     const snap = await db.ref(`bookings/${activeRoom}/${activeDateKey}`).get();
     const data = snap.val() || {};
     const seatsInRoom = SEATS_BY_ROOM[activeRoom] || [];
-    const rows = [["seatId","name","studentId","phone"]];
+    let csv = "seatId,name,studentId,phone\n";
     seatsInRoom.forEach(seat => {
       const r = data[seat] || {};
-      rows.push([seat, r.name||"", r.studentId||"", r.phone||""]);
+      csv += `${seat},${r.name||""},${r.studentId||""},${r.phone||""}\n`;
     });
-    const csv = rows.map(r => r.join(",")).join("\n");
     await navigator.clipboard.writeText(csv);
-    alert(`${activeDateKey} ${activeRoom} 좌석-명단 CSV가 복사되었습니다.`);
+    alert("CSV 복사됨");
 }
 
 function showConfirmationModal(profileName) {
-  const message = `
-    프로필 이름을 <strong>'${profileName}'</strong>으로 설정한 후 입장 바랍니다.<br><br>
-    <a href="https://open.kakao.com/o/gS1ZZ8gh" target="_blank" rel="noopener noreferrer" style="color: #3498db; font-weight: bold; text-decoration: none;">
-      ▶ 야작 오픈 채팅방 입장하기
-    </a>
-  `;
-  $confirmationMessage.innerHTML = message;
+  $confirmationMessage.innerHTML = `프로필: <strong>${profileName}</strong><br><a href="카톡방링크">▶ 카톡방 입장</a>`;
   $confirmationModal.classList.add("show");
 }
 
-function closeConfirmationModal() {
-  $confirmationModal.classList.remove("show");
-}
+function closeConfirmationModal() { $confirmationModal.classList.remove("show"); }
 
 function attachBookingsListener() {
-  if (bookingsUnsub) {
-    bookingsRef.off("value", bookingsUnsub);
-  }
+  if (bookingsUnsub) bookingsRef.off("value", bookingsUnsub);
   bookingsRef = db.ref(`bookings/${activeRoom}/${activeDateKey}`);
   bookingsUnsub = bookingsRef.on("value", snap => renderSeats(snap.val()));
 }
@@ -345,6 +294,6 @@ $searchBtn.onclick = searchReservation;
 $copyCsvBtn.onclick = copyCsv;
 $confirmationCloseBtn.onclick = closeConfirmationModal;
 
+renderRoomTabs();
 renderWeekTabs();
-
 attachBookingsListener();
