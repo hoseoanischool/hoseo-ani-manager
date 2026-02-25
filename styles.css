@@ -1,0 +1,273 @@
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif;
+  padding: 20px;
+  background: #f2f2f2;
+}
+
+h1, h2 { text-align: center; }
+
+.hint {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.room-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.room-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.active-room-display {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+.week-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 10px 0 18px;
+}
+
+.room-tabs button,
+.week-tabs button {
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.room-tabs button.active,
+.week-tabs button.active {
+  background: #222;
+  color: #fff;
+  border-color: #222;
+}
+.room-tabs button.inactive,
+.week-tabs button.inactive {
+  background-color: #ccc;
+  color: #666;
+  border-color: #ccc;
+}
+
+.seat-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+/* 106호 전용 그리드 레이아웃 */
+.seat-container.room-106 {
+    grid-template-columns: repeat(6, 80px);
+    grid-template-rows: auto;
+    grid-template-areas:
+        ". seat-1 seat-2 . seat-4 seat-5"
+        ". . seat-3 . . seat-6"
+        ". . seat-7 seat-32 . ."
+        ". . seat-8 seat-31 . ."
+        ". . seat-9 seat-30 . ."
+        ". . seat-10 seat-29 . ."
+        ". . seat-11 seat-28 . ."
+        ". . seat-12 seat-27 . ."
+        ". . seat-13 seat-26 . ."
+        ". . seat-14 seat-25 . ."
+        ". . seat-15 seat-24 . ."
+        ". . seat-16 seat-23 . ."
+        ". . seat-17 seat-22 . ."
+        ". . seat-18 seat-21 . ."
+        "seat-20 . . . . ."
+        "seat-19 . . . . .";
+}
+
+/* 210호 전용 그리드 레이아웃 */
+.seat-container.room-210 {
+    grid-template-columns: repeat(6, 80px);
+    grid-template-areas:
+        "seat-1 seat-2 . seat-3 seat-4 . seat-5 seat-6"
+        "seat-7 seat-8 . seat-9 seat-10 . seat-11 seat-12"
+        "seat-13 seat-14 . seat-15 seat-16 . seat-17 seat-18"
+        "seat-19 seat-20 . seat-21 seat-22 . seat-23 seat-24"
+        "seat-25 seat-26 . seat-27 seat-28 . seat-29 seat-30"
+        "seat-31 seat-32 . seat-33 seat-34 . seat-35 .";
+}
+
+/* 114호 전용 그리드 레이아웃 (기본) */
+.seat-container.room-114 {
+  grid-template-columns: repeat(6, 80px);
+}
+
+
+/* 지난 날짜의 좌석 */
+.seat-container.past-date .seat {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.seat {
+  width: 80px;
+  height: 80px;
+  background-color: #4CAF50;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.2;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: pre-line; /* 줄바꿈 허용(번호\n이름) */
+  display: grid;
+  place-items: center;
+  padding: 6px;
+}
+
+/* 106호 좌석 배치 */
+.room-106 .seat[data-seat-number="1"] { grid-area: seat-1; }
+.room-106 .seat[data-seat-number="2"] { grid-area: seat-2; }
+.room-106 .seat[data-seat-number="3"] { grid-area: seat-3; }
+.room-106 .seat[data-seat-number="4"] { grid-area: seat-4; }
+.room-106 .seat[data-seat-number="5"] { grid-area: seat-5; }
+.room-106 .seat[data-seat-number="6"] { grid-area: seat-6; }
+.room-106 .seat[data-seat-number="7"] { grid-area: seat-7; }
+.room-106 .seat[data-seat-number="8"] { grid-area: seat-8; }
+.room-106 .seat[data-seat-number="9"] { grid-area: seat-9; }
+.room-106 .seat[data-seat-number="10"] { grid-area: seat-10; }
+.room-106 .seat[data-seat-number="11"] { grid-area: seat-11; }
+.room-106 .seat[data-seat-number="12"] { grid-area: seat-12; }
+.room-106 .seat[data-seat-number="13"] { grid-area: seat-13; }
+.room-106 .seat[data-seat-number="14"] { grid-area: seat-14; }
+.room-106 .seat[data-seat-number="15"] { grid-area: seat-15; }
+.room-106 .seat[data-seat-number="16"] { grid-area: seat-16; }
+.room-106 .seat[data-seat-number="17"] { grid-area: seat-17; }
+.room-106 .seat[data-seat-number="18"] { grid-area: seat-18; }
+.room-106 .seat[data-seat-number="19"] { grid-area: seat-19; }
+.room-106 .seat[data-seat-number="20"] { grid-area: seat-20; }
+.room-106 .seat[data-seat-number="21"] { grid-area: seat-21; }
+.room-106 .seat[data-seat-number="22"] { grid-area: seat-22; }
+.room-106 .seat[data-seat-number="23"] { grid-area: seat-23; }
+.room-106 .seat[data-seat-number="24"] { grid-area: seat-24; }
+.room-106 .seat[data-seat-number="25"] { grid-area: seat-25; }
+.room-106 .seat[data-seat-number="26"] { grid-area: seat-26; }
+.room-106 .seat[data-seat-number="27"] { grid-area: seat-27; }
+.room-106 .seat[data-seat-number="28"] { grid-area: seat-28; }
+.room-106 .seat[data-seat-number="29"] { grid-area: seat-29; }
+.room-106 .seat[data-seat-number="30"] { grid-area: seat-30; }
+.room-106 .seat[data-seat-number="31"] { grid-area: seat-31; }
+.room-106 .seat[data-seat-number="32"] { grid-area: seat-32; }
+
+
+/* 210호 좌석 배치 */
+.room-210 .seat[data-seat-number="1"] { grid-area: seat-1; }
+.room-210 .seat[data-seat-number="2"] { grid-area: seat-2; }
+.room-210 .seat[data-seat-number="3"] { grid-area: seat-3; }
+.room-210 .seat[data-seat-number="4"] { grid-area: seat-4; }
+.room-210 .seat[data-seat-number="5"] { grid-area: seat-5; }
+.room-210 .seat[data-seat-number="6"] { grid-area: seat-6; }
+.room-210 .seat[data-seat-number="7"] { grid-area: seat-7; }
+.room-210 .seat[data-seat-number="8"] { grid-area: seat-8; }
+.room-210 .seat[data-seat-number="9"] { grid-area: seat-9; }
+.room-210 .seat[data-seat-number="10"] { grid-area: seat-10; }
+.room-210 .seat[data-seat-number="11"] { grid-area: seat-11; }
+.room-210 .seat[data-seat-number="12"] { grid-area: seat-12; }
+.room-210 .seat[data-seat-number="13"] { grid-area: seat-13; }
+.room-210 .seat[data-seat-number="14"] { grid-area: seat-14; }
+.room-210 .seat[data-seat-number="15"] { grid-area: seat-15; }
+.room-210 .seat[data-seat-number="16"] { grid-area: seat-16; }
+.room-210 .seat[data-seat-number="17"] { grid-area: seat-17; }
+.room-210 .seat[data-seat-number="18"] { grid-area: seat-18; }
+.room-210 .seat[data-seat-number="19"] { grid-area: seat-19; }
+.room-210 .seat[data-seat-number="20"] { grid-area: seat-20; }
+.room-210 .seat[data-seat-number="21"] { grid-area: seat-21; }
+.room-210 .seat[data-seat-number="22"] { grid-area: seat-22; }
+.room-210 .seat[data-seat-number="23"] { grid-area: seat-23; }
+.room-210 .seat[data-seat-number="24"] { grid-area: seat-24; }
+.room-210 .seat[data-seat-number="25"] { grid-area: seat-25; }
+.room-210 .seat[data-seat-number="26"] { grid-area: seat-26; }
+.room-210 .seat[data-seat-number="27"] { grid-area: seat-27; }
+.room-210 .seat[data-seat-number="28"] { grid-area: seat-28; }
+.room-210 .seat[data-seat-number="29"] { grid-area: seat-29; }
+.room-210 .seat[data-seat-number="30"] { grid-area: seat-30; }
+.room-210 .seat[data-seat-number="31"] { grid-area: seat-31; }
+.room-210 .seat[data-seat-number="32"] { grid-area: seat-32; }
+.room-210 .seat[data-seat-number="33"] { grid-area: seat-33; }
+.room-210 .seat[data-seat-number="34"] { grid-area: seat-34; }
+.room-210 .seat[data-seat-number="35"] { grid-area: seat-35; }
+
+
+.seat strong { display: block; font-size: 16px; margin-bottom: 2px; }
+.seat .name { font-weight: 600; font-size: 13px; }
+
+.seat.booked { background-color: #e74c3c; }
+.seat.fixed {
+  background-color: gray;
+  cursor: not-allowed;
+  opacity: .9;
+}
+
+.modal {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  align-items: center; justify-content: center;
+}
+.modal.show { display: flex; }
+.modal-content {
+  background: white; padding: 20px;
+  border-radius: 12px; min-width: 280px;
+  text-align: center;
+}
+.modal-actions { margin-top: 12px; }
+
+input {
+  display: block;
+  width: 90%;
+  margin: 10px auto;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+button {
+  margin: 5px;
+  padding: 10px 14px;
+  border: none;
+  background-color: #3498db;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+button:hover { background-color: #2980b9; }
+
+.search-bar {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+#reservationList {
+  max-width: 700px; margin: 0 auto;
+  background: #fff; border-radius: 10px; padding: 10px 14px;
+}
+.res-item {
+  display: flex; flex-wrap: wrap;
+  align-items: center; justify-content: space-between;
+  border-bottom: 1px dashed #eee; padding: 8px 0;
+}
+.res-item:last-child { border-bottom: 0; }
