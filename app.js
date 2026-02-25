@@ -1,44 +1,26 @@
 // ====== 설정 ======
-const ROOMS = ["210호", "106호", "114호"];
+const ROOMS = ["212호"]; // 단일 강의실로 변경
 
 const SEATS_BY_ROOM = {
-  "210호": Array.from({ length: 35 }, (_, i) => String(i + 1)),
-  "106호": Array.from({ length: 32 }, (_, i) => String(i + 1)),
-  "114호": Array.from({ length: 30 }, (_, i) => String(i + 1)),
+  "212호": Array.from({ length: 32 }, (_, i) => String(i + 1)), // 좌석 수 32개로 변경
 };
 
 // 고정 좌석 설정
 const fixedSeatsByRoom = {
-  "210호": {
-"1": "이채은",
-"7": "김지선",
-"9": "자나라",
-"10": "최수인",
-"11": "이현두",
-"12": "임호빈",
-"13": "전가람",
-"17": "장수선",
-"18": "임소연",
-"19": "이수빈",
-"20": "장아라",
-"24": "박소윤",
-"25": "박지혜",
-"27": "장시은",
-"28": "이현아",
-},
-  "106호": {
-"14": "김정민"
-},
-  "114호": {}
+  "212호": {
+"19": "김지호",
+"20": "이지후",
+"27": "임채은"
+  }
 };
 
 // 야작 금지 인원 설정
 const BANNED_USERS = [
-  { name: "키커바", studentId: "12340000" }
+  // 필요시 여기에 야작 금지 인원 추가
 ];
 
 // CSV 복사 기능 관리자 비밀번호
-const ADMIN_PASSWORD = '0415405841-2026-1-0225';
+const ADMIN_PASSWORD = '0415405841-2025-2-0821';
 
 const KST_OFFSET_MIN = 9 * 60; // KST +09:00
 // ===================
@@ -76,7 +58,6 @@ function labelKOR(d) {
   return `${d.getMonth()+1}/${d.getDate()}(${w})`;
 }
 
-const $roomTabs = document.getElementById("roomTabs");
 const $weekTabs = document.getElementById("weekTabs");
 const $seatLayout = document.getElementById("seatLayout");
 const $modal = document.getElementById("bookingModal");
@@ -92,36 +73,18 @@ const $searchPhone = document.getElementById("searchPhoneNumber");
 const $searchBtn = document.getElementById("searchBtn");
 const $reservationList = document.getElementById("reservationList");
 const $copyCsvBtn = document.getElementById("copyCsvBtn");
-const $activeRoomDisplay = document.getElementById("activeRoomDisplay");
 const $confirmationModal = document.getElementById("confirmationModal");
 const $confirmationMessage = document.getElementById("confirmationMessage");
 const $confirmationCloseBtn = document.getElementById("confirmationCloseBtn");
-// ▼ 추가된 부분
 const $openChatLinkContainer = document.getElementById("openChatLinkContainer");
 
 
-let activeRoom = ROOMS[0];
+let activeRoom = ROOMS[0]; // 항상 212호
 let activeDate = nowKST();
 let activeDateKey = ymdKST(activeDate);
 let selectedSeat = null;
 let bookingsRef = null;
 let bookingsUnsub = null;
-
-function renderRoomTabs() {
-  $roomTabs.innerHTML = "";
-  ROOMS.forEach(room => {
-    const btn = document.createElement("button");
-    btn.textContent = room;
-    btn.className = (room === activeRoom) ? "active" : "inactive";
-    btn.onclick = () => {
-      activeRoom = room;
-      renderRoomTabs();
-      attachBookingsListener();
-    };
-    $roomTabs.appendChild(btn);
-  });
-  $activeRoomDisplay.textContent = `현재 선택: ${activeRoom}`;
-}
 
 function renderWeekTabs() {
   $weekTabs.innerHTML = "";
@@ -149,7 +112,8 @@ function renderSeats(snapshotVal) {
   const todayKey = ymdKST(nowKST());
   const isPastDate = activeDateKey < todayKey;
 
-  $seatLayout.classList.remove("room-106", "room-210", "room-114", "past-date");
+  // room-212 클래스 추가
+  $seatLayout.classList.remove("past-date");
   $seatLayout.classList.add(`room-${activeRoom.replace('호', '')}`);
   if (isPastDate) $seatLayout.classList.add("past-date");
 
@@ -211,7 +175,6 @@ async function submitBooking() {
 - 한 학기에 한 번씩 저장된 정보는 삭제될 예정입니다.
 - 야작 채팅방 내 공지사항 필독 바라며, 해당 사항을 지키지 않을 시 추후 불이익을 받을 수 있습니다.
 - 동의하지 않을 시, 야작 진행이 어렵습니다.
-
 - 해당 팝업은 최초 야작 신청 시에만 뜹니다.`;
     if (confirm(consentText)) {
       await consentRef.set({ agreedAt: Date.now() });
@@ -257,13 +220,11 @@ async function submitBooking() {
   showConfirmationModal(profileName);
 }
 
-// ▼ 수정된 부분: 예약 조회 함수
 async function searchReservation() {
   const name = $searchName.value.trim();
   const sid = $searchStudentId.value.trim();
   const phone = $searchPhone.value.trim();
 
-  // 조회 시작 시 링크와 목록 초기화
   $reservationList.innerHTML = "";
   $openChatLinkContainer.innerHTML = "";
 
@@ -292,7 +253,6 @@ async function searchReservation() {
     return;
   }
 
-  // ▼ 조회 성공 시에만 링크를 표시
   $openChatLinkContainer.innerHTML = `
     <a href="https://open.kakao.com/o/gS1ZZ8gh" target="_blank" rel="noopener noreferrer" style="color: #3498db; font-weight: bold; text-decoration: none;">
       ▶ 야작 오픈 채팅방 바로가기
@@ -327,7 +287,6 @@ async function searchReservation() {
 
       await ref.remove();
       alert("취소되었습니다.");
-      // 취소 후 목록과 링크를 다시 비움
       searchReservation();
     };
     $reservationList.appendChild(row);
@@ -337,9 +296,7 @@ async function searchReservation() {
 async function copyCsv() {
     const inputPassword = prompt("관리자 비밀번호를 입력하세요:");
   
-    if (inputPassword === null) {
-      return;
-    }
+    if (inputPassword === null) return;
   
     if (inputPassword !== ADMIN_PASSWORD) {
       alert("비밀번호가 일치하지 않습니다.");
@@ -388,6 +345,5 @@ $searchBtn.onclick = searchReservation;
 $copyCsvBtn.onclick = copyCsv;
 $confirmationCloseBtn.onclick = closeConfirmationModal;
 
-renderRoomTabs();
 renderWeekTabs();
 attachBookingsListener();
